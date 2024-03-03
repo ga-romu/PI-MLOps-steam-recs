@@ -8,12 +8,12 @@ import operator
 
 
 # Data to use
-df_games = pd.read_parquet('data-parquet/df_games.parquet')
-df_reviews = pd.read_parquet('data-parquet/df_reviews.parquet')
-df_items = pd.read_parquet('data-parquet/df_items.parquet')
-piv_norm = pd.read_parquet('data-parquet/piv_norm.parquet')
-user_sim_df = pd.read_parquet('data-parquet/user_sim_df.parquet')
-item_sim_df = pd.read_parquet('data-parquet/item_sim_df.parquet')
+df_games = pd.read_parquet('data/df_games.parquet')
+df_reviews = pd.read_parquet('data/df_reviews.parquet')
+df_items = pd.read_parquet('data/df_items.parquet')
+piv_norm = pd.read_parquet('data/piv_norm.parquet')
+user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
+item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
 
 class DataFrameEncoder(json.JSONEncoder):
     def default(self, obj):
