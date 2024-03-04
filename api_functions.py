@@ -22,7 +22,7 @@ class DataFrameEncoder(json.JSONEncoder):
             return obj.to_dict(orient='records')
         return json.JSONEncoder.default(self, obj)
     
-def developer(developer):
+def developer(developer:str):
     # Filter the dataframe by developer
     df_dev = df_games[df_games['developer'] == developer]
     
@@ -67,44 +67,7 @@ def userdata(user_id: str):
     }
     return user_data
 
-def UserForGenre(genero:str):
-
-  # Filter data for the given genre
-  genre_data = df_genre[df_genre['genres'] == genero]
-
-  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
-  user_year_playtime = (
-      genre_data
-      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
-      .sum()
-      .apply(lambda x: x / 60)  # Convert minutes to hours
-      .reset_index()
-  )
-
-  # Group by user ID and sum playtime across years
-  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
-
-  # Find user with the most playtime
-  top_user_id = user_playtime_total.idxmax()
-
-  # Filter data for the top user
-  top_user_data = user_year_playtime[user_year_playtime['user_id'] == top_user_id]
-
-  # Prepare playtime details
-  playtime_details = [
-      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
-      for _, row in top_user_data.iterrows()
-  ]
-
-  # Return user details dictionary
-  return {
-      "genre": genero,
-      "user_id": top_user_id,
-      "Hours played": playtime_details
-  }
-
-
-def best_developer_year(year):
+def best_developer_year(year:int):
   
     df_year = df_developer[df_developer['release_year'] == year]
     top_devs = (df_year.groupby('developer')['recommend'].count().reset_index().sort_values(by='recommend', ascending=False).head(3))
@@ -115,7 +78,7 @@ def best_developer_year(year):
     return top_devs_dict
 
 
-def developer_reviews_analysis(developer):
+def developer_reviews_analysis(developer: str):
   """
   Analyzes developer reviews and returns a dictionary with review counts.
 
