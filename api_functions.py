@@ -9,6 +9,7 @@ import json
 # Data to use
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
+df_developer = pd.read_parquet('data/df_developer.parquet')
 
 class DataFrameEncoder(json.JSONEncoder):
     def default(self, obj):
