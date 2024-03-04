@@ -12,6 +12,47 @@ df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
 
 
+
+def homepage():
+    '''
+    Generates an HTML homepage for the Steam API for video game queries.
+    
+    Returns:
+    str: HTML code displaying the homepage.
+    '''
+    return '''
+    <html>
+        <head>
+            <title>Steam API</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                }
+                h1 {
+                    color: #333;
+                    text-align: center;
+                }
+                p {
+                    color: #666;
+                    text-align: center;
+                    font-size: 18px;
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Steam Video Game Queries API</h1>
+            <p>Welcome to the Steam API where various queries about the gaming platform can be made.</p>
+            <p>INSTRUCTIONS:</p>
+            <p>Type <span style="background-color: lightgray;">/docs</span> after the current URL of this page to interact with the API.</p>
+            <p>Visit my profile on <a href="https://www.linkedin.com/in/g-a-ro-mu/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin"></a></p>
+            <p>The development of this project is on <a href="https://github.com/ga-romu/PI-MLOps"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-black?style=flat-square&logo=github"></a></p>
+        </body>
+    </html>
+    '''
+
+
 ##################################
 
 class DataFrameEncoder(json.JSONEncoder):
@@ -72,42 +113,6 @@ def userdata(user_id: str):
     return user_data
 
 ##################################
-
-def UserForGenre(genero:str):
-
-  # Filter data for the given genre
-  genre_data = df_genre[df_genre['genres'] == genero]
-
-  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
-  user_year_playtime = (
-      genre_data
-      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
-      .sum()
-      .apply(lambda x: x / 60)  # Convert minutes to hours
-      .reset_index()
-  )
-
-  # Group by user ID and sum playtime across years
-  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
-
-  # Find user with the most playtime
-  top_user_id = user_playtime_total.idxmax()
-
-  # Filter data for the top user
-  top_user_data = user_year_playtime[user_year_playtime['user_id'] == top_user_id]
-
-  # Prepare playtime details
-  playtime_details = [
-      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
-      for _, row in top_user_data.iterrows()
-  ]
-
-  # Return user details dictionary
-  return {
-      "genre": genero,
-      "user_id": top_user_id,
-      "Hours played": playtime_details
-  }
 
 
 ##################################

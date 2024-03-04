@@ -1,8 +1,23 @@
 from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 import api_functions as af
 
 #instance app
 app = FastAPI()
+
+#Homepage
+
+@app.get(path="/", 
+         response_class=HTMLResponse,
+         tags=["Home"])
+def homepage():
+    '''
+    Página de inicio que muestra una presentación.
+
+    Returns:
+    HTMLResponse: Respuesta HTML que muestra la presentación.
+    '''
+    return af.homepage()
 
 #Endpoint functions
 
