@@ -10,7 +10,6 @@ import json
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
-df_genre = pd.read_parquet('data/df_genre.parquet')
 
 
 ##################################
