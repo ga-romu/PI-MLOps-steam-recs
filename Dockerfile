@@ -17,7 +17,7 @@ RUN python -m venv /venv
 RUN /venv/bin/pip install -r requirements.txt
 
 # Working directory within the virtual environment
-WORKDIR /venv/lib/python3.11/site-packages  # Replace 3.11 with your Python version
+WORKDIR /venv/lib/python3.11/site-packages 
 
 # Copy application files
 COPY main.py api_functions.py ./
