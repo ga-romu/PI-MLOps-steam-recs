@@ -21,3 +21,17 @@ def developer(developer: str = Query(...,
         
     return af.developer(developer)
 
+@app.get(path = '/userdata',
+          description = """ <font color="blue">
+                        INSTRUCTIONS<br>
+                        1. Clik on "Try it out".<br>
+                        2. Type user_id the box box below.<br>
+                        3. Scroll to "Responses".
+                        </font>
+                        """,
+         tags=["General queries"])
+def userdata(user_id: str = Query(..., 
+                                description='Id of a specific User', 
+                                example="Derp-e")):
+        
+    return af.userdata(user_id)
