@@ -35,3 +35,19 @@ def userdata(user_id: str = Query(...,
                                 example="Derp-e")):
         
     return af.userdata(user_id)
+
+
+@app.get(path = '/best_developer_year',
+          description = """ <font color="blue">
+                        INSTRUCTIONS<br>
+                        1. Clik on "Try it out".<br>
+                        2. Type user_id the box box below.<br>
+                        3. Scroll to "Responses".
+                        </font>
+                        """,
+         tags=["General queries"])
+def best_developer_year(year: int = Query(..., 
+                                description="Specific year", 
+                                example="2015")):
+        
+    return af.best_developer_year(year)

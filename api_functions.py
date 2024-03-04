@@ -67,3 +67,18 @@ def userdata(user_id: str):
     }
     return user_data
 
+##################################
+
+def best_developer_year(year:int):
+  
+    df_year = df_developer[df_developer['release_year'] == year]
+    top_devs = (df_year.groupby('developer')['recommend'].count().reset_index().sort_values(by='recommend', ascending=False).head(3))
+
+    rankings = ["1st place", "2nd place", "3rd place"]
+    top_devs_dict = dict(zip(rankings, top_devs.to_dict('records')))
+
+    return top_devs_dict
+
+##################################
+
+
