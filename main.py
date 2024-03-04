@@ -1,11 +1,35 @@
 from fastapi import FastAPI, Query
 import api_functions as af
+from logging import getLogger, INFO, StreamHandler, Formatter
+import json_logging
 
 import importlib
 importlib.reload(af)
 
 #instance app
 app = FastAPI()
+
+# logger instance
+logger = getLogger(__name__)
+logger.setLevel(INFO)
+
+# Use JSON format for better integration with Render and analysis tools
+json_formatter = json_logging.JSONFormatter()
+json_handler = StreamHandler()
+json_handler.setFormatter(json_formatter)
+
+logger.addHandler(json_handler) 
+
+@app.get("/data")
+async def get_data():
+    try:
+        # Perform logic to retrieve data
+        data = {"message": "Successfully retrieved data"}
+        logger.info(f"Data retrieved: {data}")
+        return data
+    except Exception as e:
+        logger.error(f"Error retrieving data: {str(e)}")
+        return {"error": str(e)}
 
 #Endpoint functions
 
