@@ -8,7 +8,6 @@ import json
 
 # Data to use
 df_games = pd.read_parquet('data/df_games.parquet')
-df_reviews = pd.read_parquet('data/df_reviews.parquet')
 piv_norm = pd.read_parquet('data/piv_norm.parquet')
 user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
 item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
@@ -106,9 +105,8 @@ def UserForGenre(genero:str):
 
 
 def best_developer_year(year):
-    df_merged = df_reviews.merge(df_games, left_on='item_id', right_on='id')
-  # Filter data for the given year
-    df_year = df_merged[df_merged['release_year'] == year]
+  
+    df_year = df_developer[df_developer['release_year'] == year]
     top_devs = (df_year.groupby('developer')['recommend'].count().reset_index().sort_values(by='recommend', ascending=False).head(3))
 
     rankings = ["1st place", "2nd place", "3rd place"]
