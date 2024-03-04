@@ -10,9 +10,6 @@ import json
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
-piv_norm = pd.read_parquet('data/piv_norm.parquet')
-user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
-item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
 df_genre = pd.read_parquet('data/df_genre.parquet')
 
 
