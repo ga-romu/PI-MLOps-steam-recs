@@ -9,11 +9,12 @@ import operator
 
 # Data to use
 df_games = pd.read_parquet('data/df_games.parquet')
-df_reviews = pd.read_parquet('data/df_reviews.parquet')
-df_items = pd.read_parquet('data/df_items.parquet')
 piv_norm = pd.read_parquet('data/piv_norm.parquet')
 user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
 item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
+df_userdata = pd.read_parquet('data/df_userdata.parquet')
+df_genre = pd.read_parquet('data/df_genre.parquet')
+df_developer = pd.read_parquet('data/df_developer.parquet')
 
 class DataFrameEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -41,14 +42,17 @@ def developer(developer):
 
 def userdata(user_id: str):
 
-    user_items = df_items.loc[df_items['user_id'] == user_id]
-    # Ensure 'item_id' is numeric
-    user_items['item_id'] = pd.to_numeric(user_items['item_id'])
-    money_spent = user_items.merge(df_games, left_on='item_id', right_on='id')['price'].sum()
+    # Filter user_items by user_id
+    user_items = df_userdata.loc[df_userdata['user_id'] == user_id]
+
+    # Calculate money spent
+    money_spent = user_items['price'].sum()
+
+    # Get the number of items
     number_of_items = float(user_items['items_count'].unique()[0])
 
     # Filter and count only True values (recommendations)
-    user_recommendations = user_items.merge(df_reviews, left_on='item_id', right_on='item_id')['recommend']
+    user_recommendations = user_items['recommend']
     recommend_rate = user_recommendations.where(user_recommendations == True).count() 
 
     # Calculate total items to avoid division by zero
@@ -67,11 +71,8 @@ def userdata(user_id: str):
 
 def UserForGenre(genero:str):
 
-  # Merge DataFrames based on a common column (e.g., 'item_name')
-  df_merged = df_items.merge(df_games, left_on='item_name', right_on='title')
-
   # Filter data for the given genre
-  genre_data = df_merged[df_merged['genres'] == genero]
+  genre_data = df_genre[df_genre['genres'] == genero]
 
   # Calculate total playtime per user per year (assuming playtime_forever in minutes)
   user_year_playtime = (
@@ -106,10 +107,8 @@ def UserForGenre(genero:str):
 
 
 def best_developer_year(year: int):
-    df_merged = df_reviews.merge(df_games, left_on='item_id', right_on='id')
-    df_merged['posted'] = pd.to_datetime(df_merged['posted'])
-  # Filter data for the given year
-    df_year = df_merged[df_merged['posted'].dt.year == year]
+
+    df_year = df_developer[df_developer['release_year'] == year]
     top_devs = (df_year.groupby('developer')['recommend'].count().reset_index().sort_values(by='recommend', ascending=False).head(3))
 
     rankings = ["1st place", "2nd place", "3rd place"]
@@ -132,10 +131,10 @@ def developer_reviews_analysis(developer):
 
   # Merge reviews and games on item_id and developer
   # Specify how to handle differing column names if needed
-  merged_df = df_games.merge(df_reviews, left_on='id', right_on='item_id', how='inner')
+
 
   # Count reviews by sentiment category
-  review_counts = merged_df['sentiment_category'].value_counts().to_dict()
+  review_counts = df_developer['sentiment_category'].value_counts().to_dict()
 
   # Convert category counts to a list with desired format
   review_list = {
