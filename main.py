@@ -97,7 +97,7 @@ def developer_reviews_analysis(developer: str = Query(...,
     return af.developer_reviews_analysis(developer)
 
 ##################################
-@app.get(path = '/recommendation_user',
+@app.get(path = '/recomendacion_juego',
           description = """ <font color="blue">
                         INSTRUCTIONS<br>
                         1. Clik on "Try it out".<br>
@@ -106,9 +106,9 @@ def developer_reviews_analysis(developer: str = Query(...,
                         </font>
                         """,
          tags=["General queries"])
-def recommendation_user(user_id: str = Query(..., 
+def recomendacion_juego(id: int = Query(..., 
                                 description="Id of specific User", 
-                                example="zombieman182")):
+                                example="3310")):
         
-    return af.recommendation_user(user_id)
-##################################
+    return af.recomendacion_juego(id)
+int###############################

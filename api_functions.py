@@ -4,15 +4,14 @@
 import pandas as pd
 import numpy as np
 import json
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 # Data to use
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
-piv_norm = pd.read_parquet('data/piv_norm.parquet')
-user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
-item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
+df_rec = pd.read_parquet('data/df_rec.parquet')
 
 
 def homepage():
@@ -163,40 +162,35 @@ def developer_reviews_analysis(developer: str):
 
 ##################################
 
-def recommendation_user(user_id: str):
-  """
-  Recommends items (games) to a user based on user-based collaborative filtering.
+def recomendacion_juego(id: int):
+    
+    # Verificamos si el juego con game_id existe en df_games
+    game = df_rec[df_rec['id'] == id]
 
-  Args:
-      user_id (str): The ID of the user for whom recommendations are generated.
+    if game.empty:
+        return("El juego '{id}' no posee registros.")
+    
+    # Obtenemos el índice del juego dado
+    idx = game.index[0]
 
-  Returns:
-      list: A list of top 5 recommended item names (games) for the user.
-      If the user ID is not found in the data, an empty list is returned.
-  """
-  # Check if user exists in the data
-  if user_id not in piv_norm.columns:
-    return [] 
+    # Tomamos una muestra aleatoria del DataFrame df_games
+    sample_size = 2000  # Definimos el tamaño de la muestra (ajusta según sea necesario)
+    df_sample = df_rec.sample(n=sample_size, random_state=42)  # Ajustamos la semilla aleatoria según sea necesario
 
-  # Get similar users based on user_similarity dataframe
-  similar_users = user_sim_df.sort_values(by=user_id, ascending=False).index[1:11]
+    # Calculamos la similitud de contenido solo para el juego dado y la muestra
+    sim_scores = cosine_similarity([df_rec.iloc[idx, 3:]], df_sample.iloc[:, 3:])
 
-  # Get items rated by similar users
-  recommended_items = piv_norm.loc[:, similar_users].copy()
+    # Obtenemos las puntuaciones de similitud del juego dado con otros juegos
+    sim_scores = sim_scores[0]
 
-  # Remove items already rated by the target user
-  if user_id in recommended_items.columns:
-    recommended_items.drop(user_id, axis=1, inplace=True)
+    # Ordenamos los juegos por similitud en orden descendente
+    similar_games = [(i, sim_scores[i]) for i in range(len(sim_scores)) if i != idx]
+    similar_games = sorted(similar_games, key=lambda x: x[1], reverse=True)
 
-  # Fill missing values with 0
-  recommended_items.fillna(0, inplace=True)
+    # Obtenemos los 5 juegos más similares
+    similar_game_indices = [i[0] for i in similar_games[:5]]
 
-  # Calculate average rating for each item across similar users
-  average_ratings = recommended_items.mean(axis=1)
+    # Listamos los juegos similares (solo nombres)
+    similar_game_names = df_sample['title'].iloc[similar_game_indices].tolist()
 
-  # Sort items by their average rating and get the top 5
-  top_recommendations = average_ratings.sort_values(ascending=False).head(5).index.tolist()
-
-  print(f'Top 5 recommended games for {user_id}: {top_recommendations}')
-
-  return top_recommendations
+    return {"similar_games": similar_game_names}
