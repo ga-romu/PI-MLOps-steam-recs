@@ -10,7 +10,9 @@ import json
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
-
+piv_norm = pd.read_parquet('data/piv_norm.parquet')
+user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
+item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
 
 
 def homepage():
@@ -47,7 +49,7 @@ def homepage():
             <p>INSTRUCTIONS:</p>
             <p>Type <span style="background-color: lightgray;">/docs</span> after the current URL of this page to interact with the API.</p>
             <p>Visit my profile on <a href="https://www.linkedin.com/in/g-a-ro-mu/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin"></a></p>
-            <p>The development of this project is on <a href="https://github.com/ga-romu/PI-MLOps"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-black?style=flat-square&logo=github"></a></p>
+            <p>The development of this project is on <a href="https://github.com/ga-romu/PI-MLOps-steam-recs"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-black?style=flat-square&logo=github"></a></p>
         </body>
     </html>
     '''
@@ -161,3 +163,40 @@ def developer_reviews_analysis(developer: str):
 
 ##################################
 
+def recommendation_user(user_id: str):
+  """
+  Recommends items (games) to a user based on user-based collaborative filtering.
+
+  Args:
+      user_id (str): The ID of the user for whom recommendations are generated.
+
+  Returns:
+      list: A list of top 5 recommended item names (games) for the user.
+      If the user ID is not found in the data, an empty list is returned.
+  """
+  # Check if user exists in the data
+  if user_id not in piv_norm.columns:
+    return [] 
+
+  # Get similar users based on user_similarity dataframe
+  similar_users = user_sim_df.sort_values(by=user_id, ascending=False).index[1:11]
+
+  # Get items rated by similar users
+  recommended_items = piv_norm.loc[:, similar_users].copy()
+
+  # Remove items already rated by the target user
+  if user_id in recommended_items.columns:
+    recommended_items.drop(user_id, axis=1, inplace=True)
+
+  # Fill missing values with 0
+  recommended_items.fillna(0, inplace=True)
+
+  # Calculate average rating for each item across similar users
+  average_ratings = recommended_items.mean(axis=1)
+
+  # Sort items by their average rating and get the top 5
+  top_recommendations = average_ratings.sort_values(ascending=False).head(5).index.tolist()
+
+  print(f'Top 5 recommended games for {user_id}: {top_recommendations}')
+
+  return top_recommendations
