@@ -10,6 +10,8 @@ COPY requirements.txt ./requirements.txt
 # Install requirements
 RUN pip install -r requirements.txt
 
+RUN pip install -- upgrade pip
+
 # Copy github
 COPY main.py api_functions.py ./  /app/
 
