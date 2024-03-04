@@ -24,21 +24,27 @@ class DataFrameEncoder(json.JSONEncoder):
             return obj.to_dict(orient='records')
         return json.JSONEncoder.default(self, obj)
 
+def calculate_free_content_percentage(df, column_name):
+    """Calculates the percentage of free content in the given DataFrame."""
+    free_content = df[df[column_name] == 0].groupby(df[column_name]).count()
+    total_content = df.groupby(df[column_name]).count()
+    percentage_free_content = (free_content / total_content * 100).fillna(0)
+    return percentage_free_content
+
 def developer(developer):
     # Filter the dataframe by developer
-    df_dev = df_games[df_games['developer'] == developer]
+    developer_games = df_games[df_games['developer'] == developer]
     
     # Calculate the quantity of items released by year
-    items_by_year = df_dev.groupby(df_dev['release_year'])['id'].count()
+    items_by_year = developer_games.groupby(developer_games['release_year'])['id'].count()
     
     # Calculate the percentage of free content
-    free_content_by_year = (df_dev[df_dev['price'] == 0].groupby(df_dev['release_year'])['id'].count() / items_by_year * 100).fillna(0)
+    free_content_by_year = calculate_free_content_percentage(developer_games, 'price')
     
     # Create a dataframe with the results
     df_result = pd.DataFrame({'Year': items_by_year.index, 'Items Released': items_by_year.values, '% of Free Content': free_content_by_year.values})
     
     return json.dumps(df_result, cls=DataFrameEncoder)
-
 
 
 def userdata(user_id: str):
@@ -109,11 +115,18 @@ def UserForGenre(genero:str):
 
 def best_developer_year(year: int):
 
+    # Filter the data for the given year
     df_year = df_developer[df_developer['release_year'] == year]
-    top_devs = (df_year.groupby('developer')['recommend'].count().reset_index().sort_values(by='recommend', ascending=False).head(3))
 
+    # Calculate the number of recommendations for each developer
+    dev_recommend_counts = df_year['developer'].value_counts()
+
+    # Get the top 3 developers based on the number of recommendations
+    top_devs_index = dev_recommend_counts.nlargest(3).index
+
+    # Create a dictionary with the rankings and the corresponding developers
     rankings = ["1st place", "2nd place", "3rd place"]
-    top_devs_dict = dict(zip(rankings, top_devs.to_dict('records')))
+    top_devs_dict = {rank: {'developer': dev, 'recommend': dev_recommend_counts[dev]} for rank, dev in zip(rankings, top_devs_index)}
 
     return top_devs_dict
 
