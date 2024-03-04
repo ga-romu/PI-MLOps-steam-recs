@@ -83,3 +83,39 @@ def best_developer_year(year:int):
 ##################################
 
 
+def developer_reviews_analysis(developer: str):
+  """
+  Analyzes developer reviews and returns a dictionary with review counts.
+
+  Args:
+      developer: The name of the developer to analyze.
+
+  Returns:
+      A dictionary with the developer name as the key and a list containing 
+      the count of negative and positive reviews as values.
+  """
+
+  # Merge reviews and games on item_id and developer
+  # Specify how to handle differing column names if needed
+
+
+  # Count reviews by sentiment category
+  review_counts = df_developer['sentiment_category'].value_counts().to_dict()
+
+  # Convert category counts to a list with desired format
+  review_list = {
+      'Negative' : review_counts.get(0, 0),  # Use integer 0 for negative category
+      'Positive' : review_counts.get(2, 0),  # Use integer 2 for positive category
+  }
+
+  # Create the dictionary with developer name and review counts
+  return {developer: review_list}
+
+
+##################################
+
+
+##################################
+
+
+##################################
