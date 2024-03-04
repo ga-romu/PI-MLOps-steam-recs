@@ -13,6 +13,7 @@ df_developer = pd.read_parquet('data/df_developer.parquet')
 piv_norm = pd.read_parquet('data/piv_norm.parquet')
 user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
 item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
+df_genre = pd.read_parquet('data/df_genre.parquet')
 
 
 ##################################
@@ -76,6 +77,45 @@ def userdata(user_id: str):
 
 ##################################
 
+def UserForGenre(genero:str):
+
+  # Filter data for the given genre
+  genre_data = df_genre[df_genre['genres'] == genero]
+
+  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
+  user_year_playtime = (
+      genre_data
+      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
+      .sum()
+      .apply(lambda x: x / 60)  # Convert minutes to hours
+      .reset_index()
+  )
+
+  # Group by user ID and sum playtime across years
+  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
+
+  # Find user with the most playtime
+  top_user_id = user_playtime_total.idxmax()
+
+  # Filter data for the top user
+  top_user_data = user_year_playtime[user_year_playtime['user_id'] == top_user_id]
+
+  # Prepare playtime details
+  playtime_details = [
+      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
+      for _, row in top_user_data.iterrows()
+  ]
+
+  # Return user details dictionary
+  return {
+      "genre": genero,
+      "user_id": top_user_id,
+      "Hours played": playtime_details
+  }
+
+
+##################################
+
 def best_developer_year(year:int):
   
     df_year = df_developer[df_developer['release_year'] == year]
@@ -117,47 +157,6 @@ def developer_reviews_analysis(developer: str):
   # Create the dictionary with developer name and review counts
   return {developer: review_list}
 
-
-##################################
-
-
-def recommendation_user(user_id: str):
-  """
-  Recommends items (games) to a user based on user-based collaborative filtering.
-
-  Args:
-      user_id (str): The ID of the user for whom recommendations are generated.
-
-  Returns:
-      list: A list of top 5 recommended item names (games) for the user.
-      If the user ID is not found in the data, an empty list is returned.
-  """
-  # Check if user exists in the data
-  if user_id not in piv_norm.columns:
-    return [] 
-
-  # Get similar users based on user_similarity dataframe
-  similar_users = user_sim_df.sort_values(by=user_id, ascending=False).index[1:11]
-
-  # Get items rated by similar users
-  recommended_items = piv_norm.loc[:, similar_users].copy()
-
-  # Remove items already rated by the target user
-  if user_id in recommended_items.columns:
-    recommended_items.drop(user_id, axis=1, inplace=True)
-
-  # Fill missing values with 0
-  recommended_items.fillna(0, inplace=True)
-
-  # Calculate average rating for each item across similar users
-  average_ratings = recommended_items.mean(axis=1)
-
-  # Sort items by their average rating and get the top 5
-  top_recommendations = average_ratings.sort_values(ascending=False).head(5).index.tolist()
-
-  print(f'Top 5 recommended games for {user_id}: {top_recommendations}')
-
-  return top_recommendations
 
 ##################################
 
