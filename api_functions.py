@@ -9,6 +9,7 @@ import operator
 
 # Data to use
 df_games = pd.read_parquet('data/df_games.parquet')
+df_reviews = pd.read_parquet('data/df_reviews.parquet')
 piv_norm = pd.read_parquet('data/piv_norm.parquet')
 user_sim_df = pd.read_parquet('data/user_sim_df.parquet')
 item_sim_df = pd.read_parquet('data/item_sim_df.parquet')
@@ -16,94 +17,86 @@ df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_genre = pd.read_parquet('data/df_genre.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
 
-class DataFrameEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, pd.DataFrame):
-            # Convert DataFrame to a list of dictionaries
-            return obj.to_dict(orient='records')
-        return json.JSONEncoder.default(self, obj)
 
-def developer(developer):
-    # Filter the dataframe by developer
-    df_dev = df_games[df_games['developer'] == developer]
-    
-    # Calculate the quantity of items released by year
-    items_by_year = df_dev.groupby(df_dev['release_year'])['id'].count()
-    
-    # Calculate the percentage of free content
-    free_content_by_year = (df_dev[df_dev['price'] == 0].groupby(df_dev['release_year'])['id'].count() / items_by_year * 100).fillna(0)
-    
-    # Create a dataframe with the results
-    df_result = pd.DataFrame({'Year': items_by_year.index, 'Items Released': items_by_year.values, '% of Free Content': free_content_by_year.values})
-    
-    return json.dumps(df_result, cls=DataFrameEncoder)
+def developer(desarrollador):
 
+    # Filtra el dataframe por desarrollador de interés
+    data_filtrada = df_developer[df_developer['developer'] == desarrollador]
+    # Calcula la cantidad de items por año
+    cantidad_por_año = data_filtrada.groupby('release_year')['item_id'].count()
+    # Calcula la cantidad de elementos gratis por año
+    cantidad_gratis_por_año = data_filtrada[data_filtrada['price'] == 0.0].groupby('release_year')['item_id'].count()
+    # Calcula el porcentaje de elementos gratis por año
+    porcentaje_gratis_por_año = (cantidad_gratis_por_año / cantidad_por_año * 100).fillna(0).astype(int)
 
-
-def userdata(user_id: str):
-
-    # Filter user_items by user_id
-    user_items = df_userdata.loc[df_userdata['user_id'] == user_id]
-
-    # Calculate money spent
-    money_spent = user_items['price'].sum()
-
-    # Get the number of items
-    number_of_items = float(user_items['items_count'].unique()[0])
-
-    # Filter and count only True values (recommendations)
-    user_recommendations = user_items['recommend']
-    recommend_rate = user_recommendations.where(user_recommendations == True).count() 
-
-    # Calculate total items to avoid division by zero
-    total_items = user_items['items_count'].sum()
-
-    # Calculate recommendation rate (avoiding division by zero)
-    recommend_rate = recommend_rate / total_items if total_items > 0 else 0
-
-    user_data = {
-        'user id': user_id,
-        'money spent': round(money_spent, 2),
-        'number of items': number_of_items,
-        'recommend rate': round(recommend_rate,3)
+    result_dict = {
+        'cantidad_por_año': cantidad_por_año.to_dict(),
+        'porcentaje_gratis_por_año': porcentaje_gratis_por_año.to_dict()
     }
-    return user_data
+    
+    return result_dict
 
-def UserForGenre(genero:str):
+def userdata(user_id):
+    '''
+    Esta función devuelve información sobre un usuario según su 'user_id'.
+         
+    Args:
+        user_id (str): Identificador único del usuario.
+    
+    Returns:
+        dict: Un diccionario que contiene información sobre el usuario.
+            - 'cantidad_dinero' (int): Cantidad de dinero gastado por el usuario.
+            - 'porcentaje_recomendacion' (float): Porcentaje de recomendaciones realizadas por el usuario.
+            - 'total_items' (int): Cantidad de items que tiene el usuario.
+    '''
+    # Filtra por el usuario de interés
+    usuario = df_reviews[df_reviews['user_id'] == user_id]
+    # Calcula la cantidad de dinero gastado para el usuario de interés
+    cantidad_dinero = df_userdata[df_userdata['user_id']== user_id]['price'].iloc[0]
+    # Busca el count_item para el usuario de interés    
+    count_items = df_userdata[df_userdata['user_id']== user_id]['items_count'].iloc[0]
+    
+    # Calcula el total de recomendaciones realizadas por el usuario de interés
+    total_recomendaciones = usuario['reviews_recommend'].sum()
+    # Calcula el total de reviews realizada por todos los usuarios
+    total_reviews = len(df_reviews['user_id'].unique())
+    # Calcula el porcentaje de recomendaciones realizadas por el usuario de interés
+    porcentaje_recomendaciones = (total_recomendaciones / total_reviews) * 100
+    
+    return {
+        'cantidad_dinero': int(cantidad_dinero),
+        'porcentaje_recomendacion': round(float(porcentaje_recomendaciones), 2),
+        'total_items': int(count_items)
+    }
 
-  # Filter data for the given genre
-  genre_data = df_genre[df_genre['genres'] == genero]
-
-  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
-  user_year_playtime = (
-      genre_data
-      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
-      .sum()
-      .apply(lambda x: x / 60)  # Convert minutes to hours
-      .reset_index()
-  )
-
-  # Group by user ID and sum playtime across years
-  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
-
-  # Find user with the most playtime
-  top_user_id = user_playtime_total.idxmax()
-
-  # Filter data for the top user
-  top_user_data = user_year_playtime[user_year_playtime['user_id'] == top_user_id]
-
-  # Prepare playtime details
-  playtime_details = [
-      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
-      for _, row in top_user_data.iterrows()
-  ]
-
-  # Return user details dictionary
-  return {
-      "genre": genero,
-      "user_id": top_user_id,
-      "Hours played": playtime_details
-  }
+def userforgenre(genero):
+    '''
+    Esta función devuelve el top 5 de usuarios con más horas de juego en un género específico, junto con su URL de perfil y ID de usuario.
+         
+    Args:
+        genero (str): Género del videojuego.
+    
+    Returns:
+        dict: Un diccionario que contiene el top 5 de usuarios con más horas de juego en el género dado, junto con su URL de perfil y ID de usuario.
+            - 'user_id' (str): ID del usuario.
+            - 'user_url' (str): URL del perfil del usuario.
+    '''
+    # Filtra el dataframe por el género de interés
+    data_por_genero = df_genre[df_genre['genres'] == genero]
+    # Agrupa el dataframe filtrado por usuario y suma la cantidad de horas
+    top_users = data_por_genero.groupby(['user_url', 'user_id'])['playtime_forever'].sum().nlargest(5).reset_index()
+    
+    # Se hace un diccionario vacío para guardar los datos que se necesitan
+    top_users_dict = {}
+    for index, row in top_users.iterrows():
+        # User info recorre cada fila del top 5 y lo guarda en el diccionario
+        user_info = {
+            'user_id': row['user_id'],
+            'user_url': row['user_url']
+        }
+        top_users_dict[index + 1] = user_info
+    
+    return top_users_dict
 
 
 def best_developer_year(year: int):
