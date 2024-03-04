@@ -22,8 +22,10 @@ WORKDIR /venv/lib/python3.11/site-packages
 # Copy application files
 COPY main.py api_functions.py ./
 
+EXPOSE  8000
+
 # Entry point command
-CMD ["uvicorn", "main:app"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", '--port', '8000']
 
 
 
