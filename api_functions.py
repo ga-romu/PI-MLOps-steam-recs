@@ -119,21 +119,19 @@ def userdata(user_id: str):
 
 
 def UserForGenre(genre:str):
-
   # Filter data for the given genre
-  genre_data = df_genre[df_genre['genres'] == genre]
+  genre_data = df_genre[df_genre['genres'].apply(lambda x: genre in x)]
 
-  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
+  # Calculate total playtime per user per year (assuming playtime_forever in hours)
   user_year_playtime = (
       genre_data
-      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
+      .groupby(['user_id', genre_data['release_year']])['playtime_hours']
       .sum()
-      .apply(lambda x: x / 60)  # Convert minutes to hours
       .reset_index()
   )
 
   # Group by user ID and sum playtime across years
-  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
+  user_playtime_total = df_genre.groupby('user_id')['playtime_hours'].sum()
 
   # Find user with the most playtime
   top_user_id = user_playtime_total.idxmax()
@@ -143,7 +141,7 @@ def UserForGenre(genre:str):
 
   # Prepare playtime details
   playtime_details = [
-      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
+      {'year': row["release_year"], 'hours': round(row["playtime_hours"], 2)}
       for _, row in top_user_data.iterrows()
   ]
 
