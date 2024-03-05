@@ -3,7 +3,6 @@
 # import libraries
 import pandas as pd
 import numpy as np
-import json
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -58,14 +57,7 @@ def homepage():
 
 ##################################
 
-class DataFrameEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, pd.DataFrame):
-            # Convert DataFrame to a list of dictionaries
-            return obj.to_dict(orient='records')
-        return json.JSONEncoder.default(self, obj)
-    
-def developer(developer:str):
+def developer(developer):
     # Filter the dataframe by developer
     df_dev = df_games[df_games['developer'] == developer]
     
@@ -75,10 +67,10 @@ def developer(developer:str):
     # Calculate the percentage of free content
     free_content_by_year = (df_dev[df_dev['price'] == 0].groupby(df_dev['release_year'])['id'].count() / items_by_year * 100).fillna(0)
     
-    # Create a dataframe with the results
-    df_result = pd.DataFrame({'Year': items_by_year.index, 'Items Released': items_by_year.values, '% of Free Content': free_content_by_year.values})
+    # Create a list of dictionaries with the results
+    result = [{'Year': year, 'Items Released': count, '% of Free Content': percent} for year, count, percent in zip(items_by_year.index, items_by_year.values, free_content_by_year.values)]
     
-    return json.dumps(df_result, cls=DataFrameEncoder)
+    return result
 
 
 
