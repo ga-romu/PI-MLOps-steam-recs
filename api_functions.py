@@ -70,7 +70,10 @@ def developer(developer):
     # Create a list of dictionaries with the results
     result = [{'Year': year, 'Items Released': count, '% of Free Content': percent} for year, count, percent in zip(items_by_year.index, items_by_year.values, free_content_by_year.values)]
     
-    return result
+    # Convert the list to a dictionary
+    output = {f'Year: {item["Year"]}': {'Items Released': item['Items Released'], '% of Free Content': item['% of Free Content']} for item in result}
+    
+    return output
 
 
 
