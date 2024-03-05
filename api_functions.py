@@ -11,7 +11,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 df_games = pd.read_parquet('data/df_games.parquet')
 df_userdata = pd.read_parquet('data/df_userdata.parquet')
 df_developer = pd.read_parquet('data/df_developer.parquet')
+df_genre = pd.read_parquet('data/df_genre.parquet')
 df_rec = pd.read_parquet('data/df_rec.parquet')
+
 
 
 def homepage():
@@ -114,6 +116,44 @@ def userdata(user_id: str):
     return user_data
 
 ##################################
+
+
+def UserForGenre(genre:str):
+
+  # Filter data for the given genre
+  genre_data = df_genre[df_genre['genres'] == genre]
+
+  # Calculate total playtime per user per year (assuming playtime_forever in minutes)
+  user_year_playtime = (
+      genre_data
+      .groupby(['user_id', genre_data['release_year']])['playtime_forever']
+      .sum()
+      .apply(lambda x: x / 60)  # Convert minutes to hours
+      .reset_index()
+  )
+
+  # Group by user ID and sum playtime across years
+  user_playtime_total = user_year_playtime.groupby('user_id')['playtime_forever'].sum()
+
+  # Find user with the most playtime
+  top_user_id = user_playtime_total.idxmax()
+
+  # Filter data for the top user
+  top_user_data = user_year_playtime[user_year_playtime['user_id'] == top_user_id]
+
+  # Prepare playtime details
+  playtime_details = [
+      {'year': row["release_year"], 'hours': round(row["playtime_forever"], 2)}
+      for _, row in top_user_data.iterrows()
+  ]
+
+  # Return user details dictionary
+  return {
+      "genre": genre,
+      "user_id": top_user_id,
+      "Hours played": playtime_details
+  }
+
 
 
 ##################################
