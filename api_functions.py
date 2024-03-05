@@ -200,35 +200,35 @@ def developer_reviews_analysis(developer: str):
 
 ##################################
 
-def recomendacion_juego(id: int):
+def game_recommend(id: int):
     
-    # Verificamos si el juego con game_id existe en df_games
+    # Check if game 'id' exists in df_rec
     game = df_rec[df_rec['id'] == id]
 
     if game.empty:
-        return("El juego '{id}' no posee registros.")
+        return("Game id '{id}' not registered.")
     
-    # Obtenemos el índice del juego dado
+    # Find index of given game
     idx = game.index[0]
 
-    # Tomamos una muestra aleatoria del DataFrame df_games
-    sample_size = 2000  # Definimos el tamaño de la muestra (ajusta según sea necesario)
-    df_sample = df_rec.sample(n=sample_size, random_state=42)  # Ajustamos la semilla aleatoria según sea necesario
+    # Take random sample of dataframe
+    sample_size = 2000  # Define sample size
+    df_sample = df_rec.sample(n=sample_size, random_state=42)  
 
-    # Calculamos la similitud de contenido solo para el juego dado y la muestra
+    # Check similarity between game and sample
     sim_scores = cosine_similarity([df_rec.iloc[idx, 3:]], df_sample.iloc[:, 3:])
 
-    # Obtenemos las puntuaciones de similitud del juego dado con otros juegos
+    # Get similarity score
     sim_scores = sim_scores[0]
 
-    # Ordenamos los juegos por similitud en orden descendente
+    # Sort games based on similarity scores (descending order)
     similar_games = [(i, sim_scores[i]) for i in range(len(sim_scores)) if i != idx]
     similar_games = sorted(similar_games, key=lambda x: x[1], reverse=True)
 
-    # Obtenemos los 5 juegos más similares
+    # Get top 5 most similar games
     similar_game_indices = [i[0] for i in similar_games[:5]]
 
-    # Listamos los juegos similares (solo nombres)
+    # List  of recommended games
     similar_game_names = df_sample['title'].iloc[similar_game_indices].tolist()
 
     return {"similar_games": similar_game_names}
